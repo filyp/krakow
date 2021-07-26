@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "krakow"
+version = "0.1.0"
+description = "Well balanced hierarchical graph clustering"
+authors = ["Filip Sondej <filipsondej@protonmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+networkx = "^2.6.1"
+numpy = "^1.21.1"
+matplotlib = "^3.4.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
