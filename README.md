@@ -32,6 +32,10 @@ plot_dendrogram(dendrogram)
 ## Balance comparison
 
 Balance can be adjusted with the `balance` parameter. On default it's set to 2 (can be seen in the image above). When set to 1, the algorithm is identical to the Paris algorithm. The tree is clearly less balanced then:
+```
+dendrogram = krakow(Graph, balance=1)
+plot_dendrogram(dendrogram)
+```
 
 ![Img](images/balance1.png)
 
@@ -50,9 +54,9 @@ Here, it's defined as:
 
 ![formula](https://render.githubusercontent.com/render/math?math=d(a,b)=\frac{(p(a)p(b))^{balance}}{p(a,b)})
 
-In effect big clusters, are treated as having more distance between them, so small clusters will be merged first. This leads to a more balanced tree.
+In effect, big clusters are treated as having more distance between them, so small clusters will be merged first. This leads to a more balanced tree.
 
 
-TODO: prove that for balance > 1 algorithm is still reducible (which is necessary for correctness)
+TODO: prove that for balance > 1 algorithm is still reducible (which is necessary for correctness).
 
 We can also experiment with other distance definitions (as long as they are reducible), and check which give the best balance while preserving clustering quality (which can be measured with `krakow.utils.normalized_dasgupta_cost`).
