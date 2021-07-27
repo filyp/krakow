@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 #
 #    Copyright (C) 2018 by
@@ -25,6 +25,8 @@ def krakow(G, balance=2, copy_graph=True):
     TODO: prove that for balance > 1 algorithm is reducible
           https://arxiv.org/pdf/1806.01664.pdf
     """
+    assert balance >= 1
+
     n = G.number_of_nodes()
     if copy_graph:
         F = G.copy()

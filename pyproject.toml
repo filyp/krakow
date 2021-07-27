@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "krakow"
-version = "0.1.0"
+version = "0.1.1"
 description = "Well balanced hierarchical graph clustering"
 authors = ["Filip Sondej <filipsondej@protonmail.com>"]
 
