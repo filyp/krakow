@@ -21,9 +21,6 @@ def krakow(G, balance=2, copy_graph=True):
     at 1, the algorithm is the same as paris
     the higher the balance, the more even the merges
     too high balance can harm clustering quality
-
-    TODO: prove that for balance > 1 algorithm is reducible
-          https://arxiv.org/pdf/1806.01664.pdf
     """
     assert balance >= 1
 

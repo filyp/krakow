@@ -35,7 +35,24 @@ Balance can be adjusted with the `balance` parameter. On default it's set to 2 (
 
 ![Img](images/balance1.png)
 
-Any value >= 1 can be set, but enforcing a very high balance can harm the clustering quality.
-
 For `balance=1.5`:
 ![Img](images/balance1.5.png)
+
+Any value >= 1 can be set, but enforcing a very high balance can harm the clustering quality.
+
+# Math
+
+The only difference from the Paris algorithm, is the definition of distance between clusters. In Paris (see equation 2 in [their paper](https://arxiv.org/pdf/1806.01664.pdf)), it's:
+
+![formula](https://render.githubusercontent.com/render/math?math=d(a,b)=\frac{p(a)p(b)}{p(a,b)})
+
+Here, it's defined as:
+
+![formula](https://render.githubusercontent.com/render/math?math=d(a,b)=\frac{(p(a)p(b))^{balance}}{p(a,b)})
+
+In effect big clusters, are treated as having more distance between them, so small clusters will be merged first. This leads to a more balanced tree.
+
+
+TODO: prove that for balance > 1 algorithm is still reducible (which is necessary for correctness)
+
+We can also experiment with other distance definitions (as long as they are reducible), and check which give the best balance while preserving clustering quality (which can be measured with `krakow.utils.normalized_dasgupta_cost`).
