@@ -19,12 +19,16 @@ from os.path import join
 
 def split_into_n_children(tree, n):
     """Cut the biggest cluster in two, and repeat until there are n clusters.
+
+    Can throw ValueError if the tree cannot be further divided.
     """
     children = [tree]
 
     while len(children) < n:
         index_of_biggest = np.argmax([child.count for child in children])
         to_split = children[index_of_biggest]
+        if to_split.is_leaf():
+            raise ValueError("tree cannot be further divided")
         splitten = [to_split.left, to_split.right]
         children[index_of_biggest : index_of_biggest + 1] = splitten
         # print([child.count for child in children])
