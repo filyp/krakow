@@ -59,4 +59,8 @@ In effect, big clusters are treated as having more distance between them, so sma
 
 TODO: prove that for balance > 1 algorithm is still reducible (which is necessary for correctness).
 
-We can also experiment with other distance definitions (as long as they are reducible), and check which give the best balance while preserving clustering quality (which can be measured with `krakow.utils.normalized_dasgupta_cost`).
+We can also experiment with other distance definitions (as long as they are reducible), and check which give the best balance while preserving clustering quality (clustering quality measured by Dasgupta's cost).
+
+One candidate family of functions is:
+
+![formula](https://render.githubusercontent.com/render/math?math=d(a,b)=\frac{min(p(a),p(b))^{\alpha}max(p(a),p(b))^{\beta}}{p(a,b)})
