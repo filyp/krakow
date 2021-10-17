@@ -64,3 +64,5 @@ We can also experiment with other distance definitions (as long as they are redu
 One candidate family of functions is:
 
 ![formula](https://render.githubusercontent.com/render/math?math=d(a,b)=\frac{min(p(a),p(b))^{\alpha}max(p(a),p(b))^{\beta}}{p(a,b)})
+
+(with both alpha and beta >= 1)
