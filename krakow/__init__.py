@@ -1,4 +1,4 @@
-__version__ = '0.1.3'
+__version__ = '0.2.0'
 
 #
 #    Copyright (C) 2018 by
@@ -15,14 +15,15 @@ import numpy as np
 import networkx as nx
 
 
-def krakow(G, balance=2, copy_graph=True):
+def krakow(G, alpha=2, beta=2, copy_graph=True):
     """
-    balance should be >= 1
-    at 1, the algorithm is the same as paris
-    the higher the balance, the more even the merges
-    too high balance can harm clustering quality
+    alpha and beta should be >= 1
+    at alpha==beta==1, the algorithm is the same as paris
+    the higher those paramters, the more even the merges
+    but too high values can harm clustering quality
     """
-    assert balance >= 1
+    assert alpha >= 1
+    assert beta >= 1
 
     n = G.number_of_nodes()
     if copy_graph:
@@ -68,8 +69,10 @@ def krakow(G, balance=2, copy_graph=True):
             b = -1
             for v in F.neighbors(a):
                 if v != a:
+                    small = min(w[v], w[a])
+                    big = max(w[v], w[a])
                     d = (
-                        (w[v] * w[a]) ** balance
+                        (small ** alpha) * (big ** beta)
                         / float(F[a][v]["weight"])
                         / float(wtot)
                     )
