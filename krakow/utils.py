@@ -8,6 +8,7 @@
 #    almost all of the code comes from:
 #    https://github.com/tbonald/paris/blob/master/utils.py
 
+import io
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -87,17 +88,28 @@ def plot_best_clusterings(G, D, k, pos, width=16, height=8):
     plt.show()
 
 
-# Plot dendrogram
-def plot_dendrogram(D, logscale=True, clusters_limit=400, width=14, height=5):
-    plt.figure(figsize=(width, height))
+def create_dendrogram(D, clusters_limit=100, width=10, height=4):
+    # a hack to disable plotting, only return the image
+    was_interactive = plt.isinteractive()
+    plt.ioff()
+
+    _ = plt.figure(figsize=(width, height))
+    # display logarithm of cluster distances
     Dlog = D.copy()
-    if logscale:
-        Dlog[:, 2] = np.log(Dlog[:, 2])
-        Dlog[1:, 2] = Dlog[1:, 2] - Dlog[1, 2]
-        Dlog[0, 2] = 0
+    Dlog[:, 2] = np.log(Dlog[:, 2])
+    # cut off the bottom part of the plot as it's not informative
+    Dlog[:, 2][:-clusters_limit] *= 0
+    Dlog[-clusters_limit:, 2] = Dlog[-clusters_limit:, 2] - Dlog[-clusters_limit, 2]
+
     dendrogram(Dlog, leaf_rotation=90.0, truncate_mode="lastp", p=clusters_limit)
     plt.axis("off")
-    plt.show()
+    img = io.BytesIO()
+    plt.savefig(img, bbox_inches="tight")
+
+    # revert to the previous plt state
+    if was_interactive:
+        plt.ion()
+    return img
 
 
 # Print names of the elements of the k largest clusters
