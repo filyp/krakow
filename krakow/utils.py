@@ -12,10 +12,23 @@ import io
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import dendrogram
+from PIL import Image
+from scipy.cluster.hierarchy import dendrogram, to_tree
+
+from krakow import krakow
 
 # from louvain import louvain
-from os.path import join
+
+
+def generate_shuffled_graph(G):
+    """
+    You can use it on a graph before passing it to a clustering algorithm.
+    This way you may get slightly different clustering at the end.
+    """
+    edges = list(G.edges(data=True))
+    np.random.shuffle(edges)
+    New_graph = nx.from_edgelist(edges)
+    return New_graph
 
 
 def split_into_n_children(tree, n):
@@ -34,6 +47,117 @@ def split_into_n_children(tree, n):
         children[index_of_biggest : index_of_biggest + 1] = splitten
         # print([child.count for child in children])
     return children
+
+
+def create_dendrogram(D, clusters_limit=None, width=10, height=4):
+    """
+    If clusters limit is None, then all clusters are shown, without any limit.
+    """
+    # a hack to disable plotting, only return the image
+    was_interactive = plt.isinteractive()
+    plt.ioff()
+
+    _ = plt.figure(figsize=(width, height))
+    # display logarithm of cluster distances
+    Dlog = D.copy()
+    Dlog[:, 2] = np.log(Dlog[:, 2])
+    if clusters_limit is not None:
+        # cut off the bottom part of the plot as it's not informative
+        Dlog[:, 2][:-clusters_limit] *= 0
+        Dlog[-clusters_limit:, 2] = Dlog[-clusters_limit:, 2] - Dlog[-clusters_limit, 2]
+        dendrogram(Dlog, leaf_rotation=90.0, truncate_mode="lastp", p=clusters_limit)
+    else:
+        Dlog[:, 2] = Dlog[:, 2] - Dlog[0, 2]
+        dendrogram(Dlog, leaf_rotation=90.0)
+
+    plt.axis("off")
+    img = io.BytesIO()
+    plt.savefig(img, bbox_inches="tight")
+
+    # revert to the previous plt state
+    if was_interactive:
+        plt.ion()
+    return img
+
+
+def _depth_of_leaves(tree):
+    if tree.is_leaf():
+        return [0]
+
+    left = _depth_of_leaves(tree.left)
+    right = _depth_of_leaves(tree.right)
+
+    return [depth + 1 for depth in left + right]
+
+
+def get_disbalance(tree):
+    """
+    how much higher is the average leaf depth, than in an ideally balanced tree
+    """
+    depths = _depth_of_leaves(tree)
+    return np.average(depths) - np.log2(tree.count)
+
+
+def _balance_on_single_node(node):
+    """
+    ideal balance (0.5, 0.5) gives a score 0
+    any inbalance returns negative score
+    """
+    if node.is_leaf() or node.left.is_leaf() or node.right.is_leaf():
+        # TODO is this robust? maybe give some penalty instead
+        # this will never be a problem if we stay near the top layers
+        return 0
+    left_ratio = node.left.count / node.count
+    right_ratio = node.right.count / node.count
+    return 2 + np.log2(left_ratio) + np.log2(right_ratio)
+
+
+def get_top_levels_balance_log(tree, levels=5):
+    """
+    how disbalanced are top levels of the tree
+    any inbalance returns negative score, 0 is perfect
+    """
+    balance_on_levels = []
+
+    nodes = [tree]
+    for _ in range(levels):
+        balances_on_one_level = [_balance_on_single_node(node) for node in nodes]
+        balance_on_levels.append(np.average(balances_on_one_level))
+
+        new_nodes = []
+        for node in nodes:
+            if node.is_leaf():
+                continue
+            if node.left is not None:
+                new_nodes.append(node.left)
+            if node.right is not None:
+                new_nodes.append(node.right)
+        nodes = new_nodes
+
+    return np.average(balance_on_levels)
+
+
+def help_finding_optimal_alpha(G, alphas, clusters_limit=None, width=10, height=4, levels=5):
+    """
+    Runs the clustering for each specified alpha value, for graph G.
+    For each clustering prints it's quality and disbalance.
+    """
+    for alpha in alphas:
+        dendrogram = krakow(G, alpha=alpha, beta=1)
+        tree = to_tree(dendrogram)
+
+        print(f"\nalpha = {alpha}")
+        print(f"Disbalance: {get_disbalance(tree):.3f}")
+        print(f"Top levels balance: {get_top_levels_balance_log(tree, levels=levels):.3f}")
+        print(f"Clustering quality: {1 - normalized_dasgupta_cost(G, dendrogram):.3f}")
+        img = create_dendrogram(
+            dendrogram, clusters_limit=clusters_limit, width=width, height=height
+        )
+        try:
+            display(Image.open(img))
+        except NameError:
+            print("Cannot display dendrogram, please run this in IPython")
+            pass
 
 
 #########################
@@ -64,9 +188,7 @@ def plot_best_clusterings(G, D, k, pos, width=16, height=8):
     ]
     plt.rcParams.update({"font.size": 24})
     plt.figure(figsize=(k1 * width, k2 * height))
-    plt.subplots_adjust(
-        left=0.02, right=0.98, bottom=0.06, top=0.85, wspace=0.05, hspace=0.05
-    )
+    plt.subplots_adjust(left=0.02, right=0.98, bottom=0.06, top=0.85, wspace=0.05, hspace=0.05)
     for i in range(k):
         clustering = best_clustering(D, i)
         length = [len(c) for c in clustering]
@@ -86,30 +208,6 @@ def plot_best_clusterings(G, D, k, pos, width=16, height=8):
             )
             draw_nodes.set_edgecolor("k")
     plt.show()
-
-
-def create_dendrogram(D, clusters_limit=100, width=10, height=4):
-    # a hack to disable plotting, only return the image
-    was_interactive = plt.isinteractive()
-    plt.ioff()
-
-    _ = plt.figure(figsize=(width, height))
-    # display logarithm of cluster distances
-    Dlog = D.copy()
-    Dlog[:, 2] = np.log(Dlog[:, 2])
-    # cut off the bottom part of the plot as it's not informative
-    Dlog[:, 2][:-clusters_limit] *= 0
-    Dlog[-clusters_limit:, 2] = Dlog[-clusters_limit:, 2] - Dlog[-clusters_limit, 2]
-
-    dendrogram(Dlog, leaf_rotation=90.0, truncate_mode="lastp", p=clusters_limit)
-    plt.axis("off")
-    img = io.BytesIO()
-    plt.savefig(img, bbox_inches="tight")
-
-    # revert to the previous plt state
-    if was_interactive:
-        plt.ion()
-    return img
 
 
 # Print names of the elements of the k largest clusters

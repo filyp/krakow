@@ -1,4 +1,4 @@
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 #
 #    Copyright (C) 2018 by
